@@ -52,6 +52,31 @@ app.get('/api/citys', (req, res) => {
 
 			const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
 
+			function checkFailed (then) {
+			  return function (responses) {
+			    const someFailed = responses.some(response => response.error)
+
+			    if (someFailed) {
+			      throw responses
+			    }
+
+			    return then(responses)
+			  }
+			}
+
+			async function getT(callback){
+			  const llamada = await axios.all(promisesResolved)
+			  .then(checkFailed(([...structures]) => {
+			  	console.log('structures',structures);
+				return {data:structures}
+			  }))
+			  .catch((err) => {
+				return {data:err}
+			  });
+				 
+			  console.log('llamada',llamada);
+			  return llamada;
+			}
 
 			getT().then(objTmp => {
 				console.log('objTmp',objTmp);
@@ -66,32 +91,6 @@ app.get('/api/citys', (req, res) => {
 	});
 });
 
-
-function checkFailed (then) {
-  return function (responses) {
-    const someFailed = responses.some(response => response.error)
-
-    if (someFailed) {
-      throw responses
-    }
-
-    return then(responses)
-  }
-}
-
-async function getT(callback){
-  const llamada = await axios.all(promisesResolved)
-  .then(checkFailed(([...structures]) => {
-  	console.log('structures',structures);
-	return {data:structures}
-  }))
-  .catch((err) => {
-	return {data:err}
-  });
-	 
-  console.log('llamada',llamada);
-  return llamada;
-}
 
 
 if (process.env.NODE_ENV === 'production') {
