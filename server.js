@@ -91,9 +91,13 @@ var pusher = new Pusher({
   encrypted: true
 });
 
-pusher.trigger('my-channel', 'my-event', {
-  "message": "hello world"
-});
+setInterval(()=>{
+	pusher.trigger('my-channel', 'my-event', {
+	  "message": "hello world"
+	});
+},10000);
+
+
 
 
 
