@@ -92,9 +92,56 @@ var pusher = new Pusher({
 });
 
 setInterval(()=>{
-	pusher.trigger('my-channel', 'my-event', {
-	  "message": "hello world"
-	});
+
+		redis.hgetall('citys', function(err, object) {
+	  		const promises = [];
+			const cityName   = [];
+
+			for (var k in object) {
+				var o = object[k].split('|');
+				            console.log('object K', object[k]);
+				            promises.push(axios.get('https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/'+o[0]+','+o[1]))
+				            cityName.push(k);
+			}
+
+			const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
+
+			function checkFailed (then) {
+			  return function (responses) {
+			    const someFailed = responses.some(response => response.error)
+
+			    if (someFailed) {
+			      throw responses
+			    }
+
+			    return then(responses)
+			  }
+			}
+
+			async function getT(callback){
+			  const llamada = await axios.all(promisesResolved)
+			  .then(checkFailed(([...structures]) => {
+			  	
+				return {data:structures}
+			  }))
+			  .catch((err) => {
+				return {data:err}
+			  });
+				 
+			  return llamada;
+			}
+
+			getT().then(objTmp => {
+				
+			    let relevantData = objTmp.data.map(function(item,index){
+					return {[cityName[index]]:{'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}}
+				});
+				
+				pusher.trigger('teobischannel', 'refresh', {
+					citys:relevantData
+				});
+			});	
+	  	});
 },10000);
 
 
