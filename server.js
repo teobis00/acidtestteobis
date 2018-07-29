@@ -18,6 +18,10 @@ if (process.env.REDISTOGO_URL) {
     var redis = require("redis").createClient();
 }
 
+redis.hmset('citys', {
+    'santiago': '-33.447487|-70.673676.',
+});
+
 app.get('/api/hello', (req, res) => {
   res.send({ express: 'Hello From Express' });
 });
