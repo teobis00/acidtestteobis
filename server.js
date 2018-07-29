@@ -3,6 +3,7 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
 const axios = require('axios');
+const Pusher = require('pusher');
 
 
 if (process.env.REDISTOGO_URL) {
@@ -59,14 +60,13 @@ app.get('/api/citys', (req, res) => {
 			async function getT(callback){
 			  const llamada = await axios.all(promisesResolved)
 			  .then(checkFailed(([...structures]) => {
-			  	console.log('structures',structures);
+			  	
 				return {data:structures}
 			  }))
 			  .catch((err) => {
 				return {data:err}
 			  });
 				 
-			  console.log('llamada',llamada);
 			  return llamada;
 			}
 
@@ -81,6 +81,18 @@ app.get('/api/citys', (req, res) => {
 
 		}
 	});
+});
+
+var pusher = new Pusher({
+  appId: '568815',
+  key: '6b37d05687f27a568c19',
+  secret: '435db3e9a74bcdf0dd50',
+  cluster: 'us2',
+  encrypted: true
+});
+
+pusher.trigger('my-channel', 'my-event', {
+  "message": "hello world"
 });
 
 
