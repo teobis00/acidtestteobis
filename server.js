@@ -6,7 +6,7 @@ const axios = require('axios');
 const Pusher = require('pusher');
 
 
-const skey = 'da506cd466b6291ff8d786c0d6d0f9f9';
+const skey = 'dc8ff4a0abdea23dae323485dd21fc64';
 
 if (process.env.REDISTOGO_URL) {
 
@@ -41,7 +41,7 @@ app.get('/api/citys', (req, res) => {
 			for (var k in object) {
 				var o = object[k].split('|');
 				            console.log('object K', object[k]);
-				            promises.push(axios.get('https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/'+o[0]+','+o[1]))
+				            promises.push(axios.get(`https://api.darksky.net/forecast/${skey}/${o[0]},${o[1]}`))
 				            cityName.push(k);
 			}
 
@@ -93,6 +93,7 @@ var pusher = new Pusher({
   encrypted: true
 });
 
+/*
 setInterval(()=>{
 
 		redis.hgetall('citys', function(err, object) {
@@ -102,7 +103,7 @@ setInterval(()=>{
 			for (var k in object) {
 				var o = object[k].split('|');
 				            console.log('object K', object[k]);
-				            promises.push(axios.get('https://api.darksky.net/forecast/'+skey+'/'+o[0]+','+o[1]))
+				            promises.push(axios.get(`https://api.darksky.net/forecast/${skey}/${o[0]},${o[1]}`))
 				            cityName.push(k);
 			}
 
@@ -145,7 +146,7 @@ setInterval(()=>{
 			});	
 	  	});
 },10000);
-
+*/
 
 
 
