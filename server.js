@@ -53,7 +53,7 @@ async function getT(callback){
 	return {data:err}
   });
 	 
-  console.log('structures',llamada);
+  console.log('llamada',llamada);
   return llamada;
 }
   
@@ -73,11 +73,11 @@ app.get('/api/citys', (req, res) => {
 			for (var k in object) {
 				var o = object[k].split('|');
 				            console.log('object K', object[k]);
-				            promises.push(axios.get(`https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/${o[0]},${o[1]}`))
+				            promises.push(axios.get('https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/'+o[0]+','+o[1]))
 			}
 
 			getT().then(objTmp => {
-	
+				console.log('objTmp',objTmp);
 			    let relevantData = objTmp.data.map(function(item){
 				return {'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}});
 				
