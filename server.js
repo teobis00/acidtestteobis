@@ -37,7 +37,7 @@ app.get('/api/citys', (req, res) => {
 
 			const promises = [];
 			const cityName   = [];
-			console.log('api call ',`https://api.darksky.net/forecast/${skey}/${o[0]},${o[1]}`);
+			
 			for (var k in object) {
 				var o = object[k].split('|');
 				            console.log('object K', object[k]);
