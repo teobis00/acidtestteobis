@@ -28,11 +28,6 @@ redis.hmset('citys', {
 /*________________*/
 
 const promises = [];
-for (var k in citys) {
-	var o = citys[k].split('|');
-	            promises.push(axios.get(`https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/${o[0]},${o[1]}`))
-}
-
 
 const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
 
@@ -74,6 +69,11 @@ app.get('/api/citys', (req, res) => {
 		if(!object){
 			res.send({ citys:{} });
 		}else{
+
+			for (var k in object) {
+				var o = citys[k].split('|');
+				            promises.push(axios.get(`https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/${o[0]},${o[1]}`))
+			}
 
 			getT().then(objTmp => {
 	
