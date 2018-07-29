@@ -4,9 +4,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 // API calls
 
-var redis = require("redis").createClient();
+const redis = require("redis").createClient();
+
+console.log(' ______----____________ process.env.NODE_ENV',process.env.NODE_ENV.' ______----____________', process.env.REDISTOGO_URL);
 
 if (process.env.REDISTOGO_URL) {
+
 	var rtg   = require("url").parse(process.env.REDISTOGO_URL);
 	var redis = require("redis").createClient(rtg.port, rtg.hostname);
 
