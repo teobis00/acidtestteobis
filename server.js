@@ -46,15 +46,15 @@ function checkFailed (then) {
 async function getT(callback){
   const llamada = await axios.all(promisesResolved)
   .then(checkFailed(([...structures]) => {
+  	console.log('structures',structures);
 	return {data:structures}
   }))
   .catch((err) => {
 	return {data:err}
   });
 	 
-  //console.log(llamada);
+  console.log('structures',llamada);
   return llamada;
-  //callback.call(llamada);
 }
   
 //console.log('getT', getT(function(c){ console.log(c) }));
@@ -67,11 +67,12 @@ async function getT(callback){
 app.get('/api/citys', (req, res) => {
 	redis.hgetall('citys', function(err, object) {
 		if(!object){
-			res.send({ citys:{} });
+			res.send({ citys:0 });
 		}else{
 
 			for (var k in object) {
 				var o = object[k].split('|');
+				            console.log('object K', object[k]);
 				            promises.push(axios.get(`https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/${o[0]},${o[1]}`))
 			}
 
