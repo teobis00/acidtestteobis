@@ -27,37 +27,7 @@ redis.hmset('citys', {
 /*________________*/
 /*________________*/
 
-const promises = [];
-
-const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
-
-function checkFailed (then) {
-  return function (responses) {
-    const someFailed = responses.some(response => response.error)
-
-    if (someFailed) {
-      throw responses
-    }
-
-    return then(responses)
-  }
-}
-
-async function getT(callback){
-  const llamada = await axios.all(promisesResolved)
-  .then(checkFailed(([...structures]) => {
-  	console.log('structures',structures);
-	return {data:structures}
-  }))
-  .catch((err) => {
-	return {data:err}
-  });
-	 
-  console.log('llamada',llamada);
-  return llamada;
-}
   
-//console.log('getT', getT(function(c){ console.log(c) }));
 
 
 /*________________*/
@@ -70,10 +40,40 @@ app.get('/api/citys', (req, res) => {
 			res.send({ citys:0 });
 		}else{
 
+			const promises = [];
+
 			for (var k in object) {
 				var o = object[k].split('|');
 				            console.log('object K', object[k]);
 				            promises.push(axios.get('https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/'+o[0]+','+o[1]))
+			}
+
+			const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
+
+			function checkFailed (then) {
+			  return function (responses) {
+			    const someFailed = responses.some(response => response.error)
+
+			    if (someFailed) {
+			      throw responses
+			    }
+
+			    return then(responses)
+			  }
+			}
+
+			async function getT(callback){
+			  const llamada = await axios.all(promisesResolved)
+			  .then(checkFailed(([...structures]) => {
+			  	console.log('structures',structures);
+				return {data:structures}
+			  }))
+			  .catch((err) => {
+				return {data:err}
+			  });
+				 
+			  console.log('llamada',llamada);
+			  return llamada;
 			}
 
 			getT().then(objTmp => {
