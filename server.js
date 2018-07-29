@@ -23,12 +23,13 @@ redis.hmset('citys', {
 });
 
 redis.hgetall('citys', function(err, object) {
-    console.log('citys',object);
+    console.log('citys.santiago',object.santiago);
 });
 
 app.get('/api/hello', (req, res) => {
   res.send({ express: 'Hello From Express' });
 });
+
 if (process.env.NODE_ENV === 'production') {
   // Serve any static files
   app.use(express.static(path.join(__dirname, 'client/build')));
