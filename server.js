@@ -20,10 +20,16 @@ if (process.env.REDISTOGO_URL) {
 
 redis.hmset('citys', {
     'santiago': '-33.447487|-70.673676.',
+    'zurich': '47.451542|8.564572',
+    'auckland': '-36.848461|174.763336',
+    'sydney': '-33.865143|151.209900.',
+    'londres': '51.509865|-0.118092.',
+    'georgia': '33.247875|-83.441162',
+
 });
 
 redis.hgetall('citys', function(err, object) {
-    console.log('citys.santiago',object.santiago);
+    console.log('citys',object);
 });
 
 app.get('/api/hello', (req, res) => {
