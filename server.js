@@ -132,7 +132,7 @@ setInterval(()=>{
 			}
 
 			getT().then(objTmp => {
-				
+				console.log('objTmp',objTmp);
 			    let relevantData = objTmp.data.map(function(item,index){
 					return {[cityName[index]]:{'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}}
 				});

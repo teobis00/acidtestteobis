@@ -17,11 +17,11 @@ class App extends Component {
       cluster: 'us2',
       encrypted: true
     });
-    let $this = this;
-    var channel = pusher.subscribe('teobischannel');
     
+    let $this =this;
+    var channel = pusher.subscribe('teobischannel');
     channel.bind('refresh', function(data) {
-      $this.setState({ response: JSON.stringify(data) })
+      console.log(data);
     });
 
   }
