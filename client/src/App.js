@@ -5,19 +5,20 @@ import Pusher from 'pusher-js';
 
 class App extends Component {
   state = {
-    response: ''
+    response: '',
+    ran:0,
   };
 
   componentDidMount() {
     this.callApi()
-      .then(res => this.setState({ response: JSON.stringify(res.citys) }))
+      .then(res => this.setState({ response: JSON.stringify(res.citys), ran : Math.floor((Math.random() * 100) + 1) }))
       .catch(err => console.log(err));
 
     var pusher = new Pusher('6b37d05687f27a568c19', {
       cluster: 'us2',
       encrypted: true
     });
-    
+
     let $this =this;
     var channel = pusher.subscribe('teobischannel');
     channel.bind('refresh', function(data) {
@@ -40,6 +41,7 @@ class App extends Component {
       <div className="App">
         <p className="App-intro">
           {this.state.response}
+          {this.state.ran}
         </p>
       </div>
     );
