@@ -33,7 +33,7 @@ console.log('con arrow',
 	);
 
 app.get('/api/hello', (req, res) => {
-  res.send({ express: 'Hello From Express',citys: });
+  res.send({ express: 'Hello From Express',citys:'' });
 });
 
 if (process.env.NODE_ENV === 'production') {
