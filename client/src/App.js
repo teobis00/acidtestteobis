@@ -11,7 +11,7 @@ class App extends Component {
 
   componentDidMount() {
     this.callApi()
-      .then(res => this.setState({ response: JSON.stringify(res.citys), ran : Math.floor((Math.random() * 100) + 1) }))
+      .then(res => this.setState({ response: JSON.stringify(res.citys) }))
       .catch(err => console.log(err));
 
     var pusher = new Pusher('6b37d05687f27a568c19', {
@@ -41,7 +41,7 @@ class App extends Component {
       <div className="App">
         <p className="App-intro">
           {this.state.response}
-          {this.state.ran}
+          {this.state.}
         </p>
       </div>
     );
