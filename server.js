@@ -22,7 +22,7 @@ redis.hmset('citys', {
     'santiago': '-33.447487|-70.673676.',
 });
 
-client.hgetall('citys', function(err, object) {
+redis.hgetall('citys', function(err, object) {
     console.log('citys',object);
 });
 
