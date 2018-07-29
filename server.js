@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
-const axios require('axios');
+const axios = require('axios');
 
 
 if (process.env.REDISTOGO_URL) {
