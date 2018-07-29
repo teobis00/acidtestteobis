@@ -3,7 +3,6 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
 const axios = require('axios');
-const Pusher = require('pusher');
 
 
 if (process.env.REDISTOGO_URL) {
@@ -25,24 +24,34 @@ redis.hmset('citys', {
     'georgia': '33.247875|-83.441162',
 });
 
+/*________________*/
+/*________________*/
+
+  
+
+
+/*________________*/
+/*________________*/
+
 
 app.get('/api/citys', (req, res) => {
 	redis.hgetall('citys', function(err, object) {
 		if(!object){
-			res.send({ citys: {} });
+			res.send({ citys:0 });
 		}else{
 
 			const promises = [];
 			const cityName   = [];
 
-			for (let k in object) {
-				let o = object[k].split('|');
+			for (var k in object) {
+				var o = object[k].split('|');
 				            console.log('object K', object[k]);
 				            promises.push(axios.get('https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/'+o[0]+','+o[1]))
 				            cityName.push(k);
 			}
 
 			const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
+
 
 			getT().then(objTmp => {
 				console.log('objTmp',objTmp);
@@ -51,25 +60,12 @@ app.get('/api/citys', (req, res) => {
 				});
 				
 				res.send({ citys:relevantData });
-
 			}); 
 
 		}
 	});
 });
 
-
-const pusher = new Pusher({
-  appId: '568815',
-  key: '6b37d05687f27a568c19',
-  secret: '435db3e9a74bcdf0dd50',
-  cluster: 'us2',
-  encrypted: true
-});
-
-pusher.trigger('my-channel', 'my-event', {
-  "message": "hello world"
-});
 
 function checkFailed (then) {
   return function (responses) {
@@ -78,6 +74,7 @@ function checkFailed (then) {
     if (someFailed) {
       throw responses
     }
+
     return then(responses)
   }
 }
