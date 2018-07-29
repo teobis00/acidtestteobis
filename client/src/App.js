@@ -9,7 +9,7 @@ class App extends Component {
 
   componentDidMount() {
     this.callApi()
-      .then(res => this.setState({ response: res.citys }))
+      .then(res => this.setState({ response: JSON.stringify(res.citys) }))
       .catch(err => console.log(err));
   }
 
