@@ -2,11 +2,8 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
-// API calls
+const axios require('axios');
 
-
-
-console.log(' ______----____________ process.env.NODE_ENV',process.env.NODE_ENV,' ______----____________', process.env.REDISTOGO_URL);
 
 if (process.env.REDISTOGO_URL) {
 
@@ -19,24 +16,78 @@ if (process.env.REDISTOGO_URL) {
 }
 
 redis.hmset('citys', {
-    'santiago': '-33.447487|-70.673676.',
+    'santiago': '-33.447487|-70.673676',
     'zurich': '47.451542|8.564572',
     'auckland': '-36.848461|174.763336',
-    'sydney': '-33.865143|151.209900.',
-    'londres': '51.509865|-0.118092.',
+    'sydney': '-33.865143|151.209900',
+    'londres': '51.509865|-0.118092',
     'georgia': '33.247875|-83.441162',
-
 });
+
+/*________________*/
+/*________________*/
+
+const promises = [];
+for (var k in citys) {
+	var o = citys[k].split('|');
+	            promises.push(axios.get(`https://api.darksky.net/forecast/6215b2e4bdcc1f6a608b57d98ab91f5c/${o[0]},${o[1]}`))
+}
+
+
+const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
+
+function checkFailed (then) {
+  return function (responses) {
+    const someFailed = responses.some(response => response.error)
+
+    if (someFailed) {
+      throw responses
+    }
+
+    return then(responses)
+  }
+}
+
+async function getT(callback){
+  const llamada = await axios.all(promisesResolved)
+  .then(checkFailed(([...structures]) => {
+	return {data:structures}
+  }))
+  .catch((err) => {
+	return {data:err}
+  });
+	 
+  //console.log(llamada);
+  return llamada;
+  //callback.call(llamada);
+}
+  
+//console.log('getT', getT(function(c){ console.log(c) }));
+
+
+/*________________*/
+/*________________*/
+
 
 app.get('/api/citys', (req, res) => {
 	redis.hgetall('citys', function(err, object) {
 		if(!object){
 			res.send({ citys:{} });
 		}else{
-			res.send({ citys:object });
+
+			getT().then(objTmp => {
+	
+			    let relevantData = objTmp.data.map(function(item){
+				return {'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}});
+				
+				res.send({ citys:relevantData });
+			}); 
+
 		}
 	});
 });
+
+
 
 if (process.env.NODE_ENV === 'production') {
   // Serve any static files
