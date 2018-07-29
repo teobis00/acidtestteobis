@@ -28,12 +28,12 @@ redis.hmset('citys', {
 
 });
 
-redis.hgetall('citys', function(err, object) {
-    console.log('citys',object);
-});
+console.log('con arrow',
+	redis.hgetall('citys',(err, object)=> { return object })
+	);
 
 app.get('/api/hello', (req, res) => {
-  res.send({ express: 'Hello From Express' });
+  res.send({ express: 'Hello From Express',citys: });
 });
 
 if (process.env.NODE_ENV === 'production') {
