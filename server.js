@@ -4,7 +4,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 // API calls
 
-var redis = require("redis").createClient();
+
 
 console.log(' ______----____________ process.env.NODE_ENV',process.env.NODE_ENV,' ______----____________', process.env.REDISTOGO_URL);
 
