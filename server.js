@@ -6,7 +6,7 @@ const axios = require('axios');
 const Pusher = require('pusher');
 
 
-const skey = 'dc8ff4a0abdea23dae323485dd21fc64';
+//const skey = 'dc8ff4a0abdea23dae323485dd21fc64';
 
 if (process.env.REDISTOGO_URL) {
 
@@ -18,6 +18,7 @@ if (process.env.REDISTOGO_URL) {
     var redis = require("redis").createClient();
 }
 
+/* Set Cities on Redis */
 redis.hmset('citys', {
     'santiago': '-33.447487|-70.673676',
     'zurich': '47.451542|8.564572',
@@ -26,7 +27,7 @@ redis.hmset('citys', {
     'londres': '51.509865|-0.118092',
     'georgia': '33.247875|-83.441162',
 });
-
+let relevantData = [];
 
 
 app.get('/api/citys', (req, res) => {
@@ -34,120 +35,130 @@ app.get('/api/citys', (req, res) => {
 		if(!object){
 			res.send({ citys:0 });
 		}else{
-
-			const promises = [];
-			const cityName   = [];
-			
-			for (var k in object) {
-				var o = object[k].split('|');
-				            console.log('object K', object[k]);
-				            promises.push(axios.get(`https://api.darksky.net/forecast/${skey}/${o[0]},${o[1]}`))
-				            cityName.push(k);
-			}
-
-			const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
-
-			function checkFailed (then) {
-			  return function (responses) {
-			    const someFailed = responses.some(response => response.error)
-
-			    if (someFailed) {
-			      throw responses
-			    }
-
-			    return then(responses)
-			  }
-			}
-
-			async function getT(callback){
-			  const llamada = await axios.all(promisesResolved)
-			  .then(checkFailed(([...structures]) => {
-			  	
-				return {data:structures}
-			  }))
-			  .catch((err) => {
-				return {data:err}
-			  });
-				 
-			  return llamada;
-			}
-
-			getT().then(objTmp => {
-				console.log('objTmp',objTmp);
-			    let relevantData = objTmp.data.map(function(item,index){
-					return {[cityName[index]]:{'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}}
-				});
-				
-				res.send({ citys:relevantData });
-			}); 
+			relevantData = []; // reset Relevant Data on every Api Call
+			console.log('Object from Redis',object);
+			checkData(res,object); 
 
 		}
 	});
 });
 
-var pusher = new Pusher({
-  appId: '568815',
-  key: '6b37d05687f27a568c19',
-  secret: '435db3e9a74bcdf0dd50',
-  cluster: 'us2',
-  encrypted: true
-});
+const instance = axios.create()
+instance.interceptors.response.use(
+  response => response.data,
+  err => {
+    const error = new Error(err.response.statusText)
+    error.statusCode = err.response.status
+    error.data = err.response.data
+    return Promise.reject(error)
+  }
+);
 
-/*
-setInterval(()=>{
 
-		redis.hgetall('citys', function(err, object) {
-	  		const promises = [];
+
+const checkData = (res,object,withretry) => {
+			const promises   = [];
 			const cityName   = [];
+			console.log('OBJECT',object);
+			const api = axios.create();
+			let fake_key = '1'; // Wrong Key to simulate error
+			let real_key = 'dc8ff4a0abdea23dae323485dd21fc64';
+
+			let probability = 0.3; // Set here prob to fail the request by fake forecast key
 
 			for (var k in object) {
 				var o = object[k].split('|');
-				            console.log('object K', object[k]);
-				            promises.push(axios.get(`https://api.darksky.net/forecast/${skey}/${o[0]},${o[1]}`))
-				            cityName.push(k);
+						let skey = (Math.random(0, 1) < probability) ? fake_key:real_key;
+				        promises.push(api.get(`https://api.darksky.net/forecast/${skey}/${o[0]},${o[1]}`))
+				        cityName.push(k);
 			}
 
 			const promisesResolved = promises.map(promise => promise.catch(error => ({ error })))
 
-			function checkFailed (then) {
-			  return function (responses) {
-			    const someFailed = responses.some(response => response.error)
-
-			    if (someFailed) {
-			      throw responses
-			    }
-
-			    return then(responses)
-			  }
-			}
-
-			async function getT(callback){
-			  const llamada = await axios.all(promisesResolved)
-			  .then(checkFailed(([...structures]) => {
-			  	
-				return {data:structures}
-			  }))
-			  .catch((err) => {
-				return {data:err}
-			  });
-				 
-			  return llamada;
-			}
-
-			getT().then(objTmp => {
-				console.log('objTmp',objTmp);
-			    let relevantData = objTmp.data.map(function(item,index){
-					return {[cityName[index]]:{'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}}
-				});
+			
+			getT(promisesResolved).then(objTmp => {
 				
-				pusher.trigger('teobischannel', 'refresh', {
-					citys:relevantData
-				});
-			});	
-	  	});
-},10000);
-*/
+			    let resultObject = objTmp.data.map(function(item,index){
+			    	if(item.hasOwnProperty('error')){
+			    		return {[cityName[index]]:{}}
+			    	}else{
+			    		return {[cityName[index]]:{'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}}	
+			    	}
+				});				
 
+			    let resolved = resultObject.filter((item)=>{ 
+						if(item[Object.keys(item)[0]].hasOwnProperty('temp')){
+							return item;
+						}
+					});
+
+			    let unresolved = resultObject.filter((item)=>{ 
+						if(!item[Object.keys(item)[0]].hasOwnProperty('temp')){
+							return item;
+						}
+					});
+
+			    console.log('resolved',resolved);
+			    console.log('unresolved',unresolved);
+
+			    resolved.forEach((item)=>{
+			    	relevantData.push(item);
+			    });
+
+			    if(unresolved.length > 0){
+			    	let newObject = {};
+			    	unresolved.forEach((item)=>{
+			    		console.log('_____________unresolved item____________',Object.keys(item)[0]);
+
+			    		newObject[Object.keys(item)[0]] = object[Object.keys(item)[0]];
+			    		setRedisError(Object.keys(item)[0]);
+			    	});
+			    	checkData(res,newObject);
+			    	return false;
+			    }
+			    
+
+				returnData(res); 
+			});
+}
+
+const returnData = (res)=>{
+	res.send({ citys:relevantData });
+}
+
+const setRedisError = (city)=>{
+	let ts = Date.now() / 1000 | 0 ;
+	console.log('TimeStamp',ts);
+	redis.hmset('api.errors', {
+	    ts: `connection Error on ${ city }`
+	});
+}	
+
+
+
+function checkFailed (then) {
+  return function (responses) {
+    const someFailed = responses.some(response => response.error)
+
+    if (someFailed) {
+      throw responses
+    }
+
+    return then(responses)
+  }
+}
+
+async function getT(promisesResolved){
+  const llamada = await axios.all(promisesResolved)
+  .then(checkFailed(([...structures]) => {
+	return {data:structures}
+  }))
+  .catch((err) => {
+	return {data:err}
+  });
+  /* Return Every Call to Forecast */
+  return llamada;
+}
 
 
 
