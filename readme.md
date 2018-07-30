@@ -3,6 +3,9 @@
 Used on this
 ES6,Pusher, Redis, React Js, Sublime Text, Heroku, also me
 
+DEMO:
+https://teobisapp.herokuapp.com/
+
 ### Prerequisites
 
 Run the follow command inside proyect folder before start. also run inside /client
