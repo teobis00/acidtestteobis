@@ -29,6 +29,13 @@ redis.hmset('citys', {
 });
 let relevantData = [];
 
+let timmer = false;
+
+app.get('/api/errors',(req, res)=>{
+	redis.hgetall('api.errors', function(err, object) {
+		res.send({errors:object});
+	});
+})
 
 app.get('/api/citys', (req, res) => {
 	if(timmer){
@@ -74,7 +81,7 @@ const execInterval = ()=>{
 
 /*Start the Timer !!*/
 /*This consume to many request to the Free API !!*/
-//let timmer = setInterval(execInterval,10000);
+//timmer = setInterval(execInterval,10000);
 
 const instance = axios.create()
 instance.interceptors.response.use(
@@ -103,7 +110,7 @@ const checkData = (res,object,forsocket) => {
 			let fake_key = '1'; // Wrong Key to simulate error
 			let real_key = getForecastKey();
 
-			let probability = 0.3; // Set here prob to fail the request by fake forecast key
+			let probability = 0.1; // Set here prob to fail the request by fake forecast key
 
 			for (var k in object) {
 				var o = object[k].split('|');
@@ -194,11 +201,11 @@ const returnData = (res)=>{
 	res.send({ citys:relevantData });
 }
 
-const setRedisError = (city)=>{
+const setRedisError = async (city)=>{
 	let ts = Date.now() / 1000 | 0 ;
 	console.log('TimeStamp',ts);
 	redis.hmset('api.errors', {
-	    ts: `connection Error on ${ city }`
+	    [ts]: `connection Error on ${ city }`
 	});
 }	
 
