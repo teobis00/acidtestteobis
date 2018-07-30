@@ -31,17 +31,48 @@ let relevantData = [];
 
 
 app.get('/api/citys', (req, res) => {
+	if(timmer){
+		clearInterval(timmer);
+		timmer = setInterval(execInterval,10000);
+	}
 	redis.hgetall('citys', function(err, object) {
 		if(!object){
 			res.send({ citys:0 });
 		}else{
 			relevantData = []; // reset Relevant Data on every Api Call
 			console.log('Object from Redis',object);
-			checkData(res,object); 
+			checkData(res,object,false); 
 
 		}
 	});
 });
+
+/*Pusher API from pusher.com */
+/*Who wants to deal with socket.io */
+const pusher = new Pusher({
+  appId: '568815',
+  key: '6b37d05687f27a568c19',
+  secret: '435db3e9a74bcdf0dd50',
+  cluster: 'us2',
+  encrypted: true
+});
+
+/* Update the Front Every Ten Seconds from the redis keys citys */
+
+const execInterval = ()=>{
+	console.log('Start Interval for 10 seconds');
+	redis.hgetall('citys', function(err, object) {
+		if(!object){
+			return false;
+		}else{
+			relevantData = []; // reset Relevant Data on every Api Call
+			console.log('Object from Redis for Socket',object);
+			checkData('',object,true); 
+		}
+	});
+}
+
+let timmer = setInterval(execInterval,10000);
 
 const instance = axios.create()
 instance.interceptors.response.use(
@@ -54,15 +85,21 @@ instance.interceptors.response.use(
   }
 );
 
+const getForecastKey = ()=>{
+
+	let secret = ['1937bbf1fe34f45e2d69b9949dd83843','5c70c6d423547de85e5b3bab5cdc08f6','e405304bf29f3547ee05a72cb5bca1de','b8cff59106173db136f8a23214c255cd']
+
+	return secret[Math.floor(Math.random()*secret.length)];
+}
 
 
-const checkData = (res,object,withretry) => {
+const checkData = (res,object,forsocket) => {
 			const promises   = [];
 			const cityName   = [];
-			console.log('OBJECT',object);
+			console.log('Object From Redis',object);
 			const api = axios.create();
 			let fake_key = '1'; // Wrong Key to simulate error
-			let real_key = 'dc8ff4a0abdea23dae323485dd21fc64';
+			let real_key = getForecastKey();
 
 			let probability = 0.3; // Set here prob to fail the request by fake forecast key
 
@@ -82,7 +119,10 @@ const checkData = (res,object,withretry) => {
 			    	if(item.hasOwnProperty('error')){
 			    		return {[cityName[index]]:{}}
 			    	}else{
-			    		return {[cityName[index]]:{'temp':Math.floor(item.data.currently.temperature),'time':item.data.currently.time}}	
+			    		return {[cityName[index]]:
+			    			{'temp':Math.floor(item.data.currently.temperature),
+			    			 'time':item.data.currently.time,
+			    			 'icon':item.data.currently.icon}}	
 			    	}
 				});				
 
@@ -113,16 +153,42 @@ const checkData = (res,object,withretry) => {
 			    		newObject[Object.keys(item)[0]] = object[Object.keys(item)[0]];
 			    		setRedisError(Object.keys(item)[0]);
 			    	});
-			    	checkData(res,newObject);
+			    	checkData(res,newObject,forsocket);
 			    	return false;
 			    }
-			    
 
-				returnData(res); 
+			    if(forsocket){
+			    	callSocked();
+			    }else{
+			    	returnData(res); 	
+			    }
+				
 			});
 }
 
+const callSocked = ()=>{
+	relevantData.sort(function(a, b){
+	    var keyA = Object.keys(a)[0],
+	        keyB = Object.keys(b)[0];
+	    // Compare the 2 dates
+	    if(keyA < keyB) return -1;
+	    if(keyA > keyB) return 1;
+	    return 0;
+	});
+	pusher.trigger('teobischannel', 'refresh', {
+		citys:relevantData
+	});
+}
+
 const returnData = (res)=>{
+	relevantData.sort(function(a, b){
+	    var keyA = Object.keys(a)[0],
+	        keyB = Object.keys(b)[0];
+	    // Compare the 2 dates
+	    if(keyA < keyB) return -1;
+	    if(keyA > keyB) return 1;
+	    return 0;
+	});
 	res.send({ citys:relevantData });
 }
 
@@ -136,7 +202,7 @@ const setRedisError = (city)=>{
 
 
 
-function checkFailed (then) {
+const checkFailed = (then) => {
   return function (responses) {
     const someFailed = responses.some(response => response.error)
 
