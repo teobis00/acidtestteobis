@@ -72,7 +72,9 @@ const execInterval = ()=>{
 	});
 }
 
-let timmer = setInterval(execInterval,10000);
+/*Start the Timer !!*/
+/*This consume to many request to the Free API !!*/
+//let timmer = setInterval(execInterval,10000);
 
 const instance = axios.create()
 instance.interceptors.response.use(
